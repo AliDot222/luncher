@@ -59,7 +59,7 @@ class MainActivity : Activity() {
         }
         grid.adapter = adapter
         grid.setOnItemClickListener { _, _, p, _ ->
-            startActivity(Intent(this, BrowserActivity::class.java).putExtra("id", items[p].getString("id")))
+            startActivity(Intent(this, SitesActivity::class.java).putExtra("id", items[p].getString("id")).putExtra("name", items[p].getString("name")))
         }
         grid.setOnItemLongClickListener { _, _, p, _ -> confirmDelete(p); true }
 
@@ -80,9 +80,8 @@ class MainActivity : Activity() {
                 val name = et.text.toString().trim().ifEmpty { "profile_${items.size + 1}" }
                 val id = "p_${System.currentTimeMillis()}"
                 items.add(JSONObject().put("id", id).put("name", name))
-                prefs.edit().putString("url_$id", "https://accounts.google.com").apply()
                 save()
-                startActivity(Intent(this, BrowserActivity::class.java).putExtra("id", id))
+                startActivity(Intent(this, SitesActivity::class.java).putExtra("id", id).putExtra("name", name))
             }
             .setNegativeButton("لغو", null).show()
     }

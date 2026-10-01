@@ -4,12 +4,20 @@ plugins {
 android {
     namespace = "com.example.ailauncher"
     compileSdk = 37
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
     defaultConfig {
         applicationId = "com.example.ailauncher"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
         ndk { abiFilters += "arm64-v8a" }
     }
     compileOptions {
@@ -18,5 +26,5 @@ android {
     }
 }
 dependencies {
-    implementation("org.mozilla.geckoview:geckoview-omni:+")
+    implementation("org.mozilla.geckoview:geckoview-omni:157.0.20260924084938")
 }
