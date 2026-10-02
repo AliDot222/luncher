@@ -2,17 +2,22 @@ package com.example.ailauncher
 
 import android.app.Activity
 import android.content.Context
+import android.net.Uri
 import android.os.Bundle
+import android.text.Html
 import android.text.InputType
+import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoSessionSettings
 import org.mozilla.geckoview.GeckoView
+import org.mozilla.geckoview.WebRequestError
 
 // One profile = one Gecko "contextId" = its own persistent cookies/storage.
 class BrowserActivity : Activity() {
@@ -32,6 +37,10 @@ class BrowserActivity : Activity() {
             setPadding(pad, pad, pad, pad)
             setText(intent.getStringExtra("url") ?: "")
         }
+        val progress = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
+            max = 100
+            visibility = View.GONE
+        }
         val gv = GeckoView(this)
 
         session = GeckoSession(GeckoSessionSettings.Builder().contextId(id).build())
@@ -40,6 +49,23 @@ class BrowserActivity : Activity() {
             override fun onNewSession(s: GeckoSession, uri: String): GeckoResult<GeckoSession>? {
                 session.loadUri(uri); return null
             }
+            // Show a readable error page (with code) instead of a blank screen.
+            override fun onLoadError(s: GeckoSession, uri: String?, error: WebRequestError): GeckoResult<String>? {
+                val html = "<html><body dir='rtl' style='font-family:sans-serif;padding:24px'>" +
+                    "<h3>صفحه باز نشد</h3>" +
+                    "<p dir='ltr'>" + Html.escapeHtml(uri ?: "") + "</p>" +
+                    "<p dir='ltr'>error code: ${error.code} / category: ${error.category}</p>" +
+                    "<p>شبکه یا VPN را بررسی کن و دوباره امتحان کن.</p></body></html>"
+                return GeckoResult.fromValue("data:text/html," + Uri.encode(html))
+            }
+        }
+        session.progressDelegate = object : GeckoSession.ProgressDelegate {
+            override fun onPageStart(s: GeckoSession, url: String) { progress.visibility = View.VISIBLE }
+            override fun onProgressChange(s: GeckoSession, p: Int) {
+                progress.progress = p
+                progress.visibility = if (p in 1..99) View.VISIBLE else View.GONE
+            }
+            override fun onPageStop(s: GeckoSession, success: Boolean) { progress.visibility = View.GONE }
         }
         session.open(Gecko.get(this))
         gv.setSession(session)
@@ -64,6 +90,7 @@ class BrowserActivity : Activity() {
                 })
                 addView(bar, LinearLayout.LayoutParams(0, -2, 1f))
             }, LinearLayout.LayoutParams(-1, -2))
+            addView(progress, LinearLayout.LayoutParams(-1, -2))
             addView(gv, LinearLayout.LayoutParams(-1, 0, 1f))
         })
         if (bar.text.isNotEmpty()) go()
